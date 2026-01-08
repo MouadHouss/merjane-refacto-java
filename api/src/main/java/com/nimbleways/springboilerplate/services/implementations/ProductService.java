@@ -1,49 +1,25 @@
 package com.nimbleways.springboilerplate.services.implementations;
 
-import java.time.LocalDate;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.nimbleways.springboilerplate.domain.product.ProductStrategy;
+import com.nimbleways.springboilerplate.domain.product.ProductStrategyFactory;
+import com.nimbleways.springboilerplate.entities.Product;
+import com.nimbleways.springboilerplate.services.IProductService;
 import org.springframework.stereotype.Service;
 
-import com.nimbleways.springboilerplate.entities.Product;
-import com.nimbleways.springboilerplate.repositories.ProductRepository;
-
 @Service
-public class ProductService {
+public class ProductService implements IProductService {
 
-    @Autowired
-    ProductRepository pr;
+    private final ProductStrategyFactory productStrategyFactory;
 
-    @Autowired
-    NotificationService ns;
+    public ProductService(ProductStrategyFactory productStrategyFactory) {
 
-    public void notifyDelay(int leadTime, Product p) {
-        p.setLeadTime(leadTime);
-        pr.save(p);
-        ns.sendDelayNotification(leadTime, p.getName());
+        this.productStrategyFactory = productStrategyFactory;
     }
 
-    public void handleSeasonalProduct(Product p) {
-        if (LocalDate.now().plusDays(p.getLeadTime()).isAfter(p.getSeasonEndDate())) {
-            ns.sendOutOfStockNotification(p.getName());
-            p.setAvailable(0);
-            pr.save(p);
-        } else if (p.getSeasonStartDate().isAfter(LocalDate.now())) {
-            ns.sendOutOfStockNotification(p.getName());
-            pr.save(p);
-        } else {
-            notifyDelay(p.getLeadTime(), p);
-        }
+    @Override
+    public void processProduct(Product product) {
+        ProductStrategy strategy = productStrategyFactory.getProcessingStrategy(product.getType());
+        strategy.handle(product);
     }
 
-    public void handleExpiredProduct(Product p) {
-        if (p.getAvailable() > 0 && p.getExpiryDate().isAfter(LocalDate.now())) {
-            p.setAvailable(p.getAvailable() - 1);
-            pr.save(p);
-        } else {
-            ns.sendExpirationNotification(p.getName(), p.getExpiryDate());
-            p.setAvailable(0);
-            pr.save(p);
-        }
-    }
 }

@@ -38,4 +38,38 @@ public class Product {
 
     @Column(name = "season_end_date")
     private LocalDate seasonEndDate;
+
+
+
+    public void decreaseStock() {
+        if (available <= 0) {
+            throw new IllegalStateException("Stock already empty");
+        }
+        this.available--;
+    }
+
+    public boolean isAvailable() {
+        return available > 0;
+    }
+
+    public boolean isNotExpired() {
+        return !LocalDate.now().isAfter(this.getExpiryDate());
+    }
+
+    public boolean isInSeason() {
+        return LocalDate.now().isAfter(this.getSeasonStartDate()) && LocalDate.now().isBefore(this.getSeasonEndDate());
+    }
+
+    public void removeStock() {
+        this.available = 0;
+    }
+
+    public boolean canBeDeliveredBeforeSeasonEnd() {
+        return LocalDate.now().plusDays(this.leadTime).isBefore(this.getSeasonEndDate());
+    }
+
+    public boolean isSeasonNotStarted() {
+        return LocalDate.now().isBefore(this.getSeasonStartDate());
+    }
+
 }
