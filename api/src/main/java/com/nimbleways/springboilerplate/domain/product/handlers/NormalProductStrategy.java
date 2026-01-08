@@ -19,14 +19,11 @@ public class NormalProductStrategy implements ProductStrategy {
 
         if (p.isAvailable()) {
             p.decreaseStock();
+            pr.save(p);
         } else {
-            int leadTime = p.getLeadTime();
-            if (leadTime > 0) {
-                p.setLeadTime(leadTime);
-                ns.sendDelayNotification(leadTime, p.getName());
+            if (p.getLeadTime() > 0) {
+                ns.sendDelayNotification(p.getLeadTime(), p.getName());
             }
         }
-        pr.save(p);
-
     }
 }

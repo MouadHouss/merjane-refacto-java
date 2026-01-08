@@ -63,12 +63,12 @@ public class NormalProductStrategyTest {
         verify(notificationService)
                 .sendDelayNotification(7, "USB Hub");
 
-        verify(productRepository).save(product);
+        verify(productRepository,never()).save(product);
         assertEquals(0, product.getAvailable());
     }
 
     @Test
-    void handle_whenOutOfStockAndNoLeadTime_shouldOnlySaveProduct() {
+    void handle_whenOutOfStockAndNoLeadTime_shouldDoNothing() {
         // GIVEN
         Product product = new Product();
         product.setAvailable(0);
@@ -82,7 +82,7 @@ public class NormalProductStrategyTest {
         verify(notificationService, never())
                 .sendDelayNotification(anyInt(), anyString());
 
-        verify(productRepository).save(product);
+        verify(productRepository,never()).save(product);
         assertEquals(0, product.getAvailable());
     }
 
