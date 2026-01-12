@@ -23,11 +23,7 @@ public class OrderService implements IOrderService {
 
     @Override
     public ProcessOrderResponse processOrder(Long orderId) {
-        //TODO ADD EXCEP
         Order order = or.findById(orderId).orElseThrow();
-
-
-        //TODO REPLACE SOUT WITH LOG
         Set<Product> products = order.getItems();
         for (Product p : products) {
             productService.processProduct(p);

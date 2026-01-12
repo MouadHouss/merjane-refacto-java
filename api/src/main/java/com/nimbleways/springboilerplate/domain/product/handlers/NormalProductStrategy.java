@@ -1,29 +1,27 @@
 package com.nimbleways.springboilerplate.domain.product.handlers;
 
 import com.nimbleways.springboilerplate.domain.product.ProductStrategy;
+import com.nimbleways.springboilerplate.dto.product.ProductOutcome;
+import com.nimbleways.springboilerplate.dto.product.ProductType;
 import com.nimbleways.springboilerplate.entities.Product;
-import com.nimbleways.springboilerplate.repositories.ProductRepository;
-import com.nimbleways.springboilerplate.services.implementations.NotificationService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class NormalProductStrategy implements ProductStrategy {
 
-    private final ProductRepository pr;
-    private final NotificationService ns;
+    @Override
+    public ProductType supportedProductType() {
+        return ProductType.NORMAL;
+    }
 
     @Override
-    public void handle(Product p) {
-
+    public ProductOutcome handle(Product p) {
         if (p.isAvailable()) {
             p.decreaseStock();
-            pr.save(p);
-        } else {
-            if (p.getLeadTime() > 0) {
-                ns.sendDelayNotification(p.getLeadTime(), p.getName());
-            }
+            return ProductOutcome.STOCK_DECREMENTED;
+        } else if (p.getLeadTime() > 0) {
+            return ProductOutcome.DELAYED;
         }
+        return ProductOutcome.OUT_OF_STOCK;
     }
 }

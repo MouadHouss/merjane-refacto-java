@@ -1,32 +1,20 @@
 package com.nimbleways.springboilerplate.domain;
 
 import com.nimbleways.springboilerplate.domain.product.handlers.SeasonalProductStrategy;
+import com.nimbleways.springboilerplate.dto.product.ProductOutcome;
 import com.nimbleways.springboilerplate.entities.Product;
-import com.nimbleways.springboilerplate.repositories.ProductRepository;
-import com.nimbleways.springboilerplate.services.implementations.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 
 @ExtendWith(MockitoExtension.class)
 class SeasonalProductStrategyTest {
-
-    @Mock
-    private ProductRepository productRepository;
-
-    @Mock
-    private NotificationService notificationService;
 
     @InjectMocks
     private SeasonalProductStrategy strategy;
@@ -42,33 +30,29 @@ class SeasonalProductStrategyTest {
         product.setName("Watermelon");
 
         // WHEN
-        strategy.handle(product);
+        ProductOutcome outcome = strategy.handle(product);
 
         // THEN
         assertEquals(9, product.getAvailable());
-        verify(productRepository).save(product);
-        verify(notificationService, never())
-                .sendOutOfStockNotification(anyString());
-        verify(notificationService, never())
-                .sendDelayNotification(anyInt(), anyString());
+        assertEquals(ProductOutcome.STOCK_DECREMENTED, outcome);
     }
 
 
     @Test
     void handle_whenOutOfStockAndLeadTimeExceedsSeasonEnd_shouldNotifyOutOfStockAndRemoveStock() {
         Product product = new Product();
-        product.setAvailable(0); // ✅ rupture
+        product.setAvailable(0);
         product.setLeadTime(30);
         product.setSeasonStartDate(LocalDate.now().minusDays(10));
         product.setSeasonEndDate(LocalDate.now().plusDays(5));
         product.setName("Grapes");
 
-        strategy.handle(product);
+        ProductOutcome outcome = strategy.handle(product);
 
         assertEquals(0, product.getAvailable());
-        verify(productRepository).save(product);
+        assertEquals(ProductOutcome.STOCK_REMOVED, outcome);
     }
-    
+
     @Test
     void handle_whenOutOfStockButDelayWithinSeason_shouldSendDelayNotificationAndSave() {
         // GIVEN
@@ -80,13 +64,11 @@ class SeasonalProductStrategyTest {
         product.setName("Strawberry");
 
         // WHEN
-        strategy.handle(product);
+        ProductOutcome outcome = strategy.handle(product);
 
         // THEN
-        verify(notificationService)
-                .sendDelayNotification(5, "Strawberry");
-        verify(productRepository).save(product);
         assertEquals(0, product.getAvailable());
+        assertEquals(ProductOutcome.DELAYED, outcome);
     }
 
 }
